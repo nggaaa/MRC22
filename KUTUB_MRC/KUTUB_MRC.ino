@@ -1,20 +1,45 @@
-/*
-
-   All the resources for this project: https://www.hackster.io/Aritro
-   Modified by Aritro Mukherjee
-
-
+/*                                                                                       
+                                                 ~~                                                 
+                                           .?7. .@&. .7?.                                           
+                                       .   .Y&#?^&&:?#&J    .                                       
+                                      ?@7    .J&&@@&#?.    ?@7                                      
+                                  ~7: :&&.     .?@@?.     :&&. :7~                                  
+                                  7G#GJP@Y      .&&.      5@PJG#G7                                  
+                                   .!5@@@@J^.   :&&.   .~Y@@@@5~.                                   
+                                 ?BBBP5J77P##P7::&&.:?P##P77J5PBBB?                                 
+                                 :^.       .~JG#B@@B#P?^.       :^:                                 
+                                             ^J#@@@@BJ^                                             
+                                 JBG5J7~:^?P##P7~&&^7P##P7::~7J5GB?                                 
+                                 .^~?P@@&@GJ^.  .&&.  .~JG@&@@57~^.                                 
+                                  ^JG#GB@G      .&&.      G@GGBGJ^                                  
+                                  ?57:.B@^      ~@&^      ~@B.:757                                  
+                                      ?@Y     ^P&@@&5^     5@7                                      
+                                      :~.   !G@P!&&!G@P~   .~:                                      
+                                           .P5^ .@&. ^PP.                                           
+                                                 JJ                                                 
+                                                                                                  
+                     .GB#~ .J##P^ 5##?   P##7 ###BBB### ?##5   J##Y 7#BB###BP!                      
+                     .&@@!^B@@5:  B@@J   B@@? ?7Y@@@J7? Y@@G   5@@P ?@@#   @@@:                     
+                     .&@@B@@#^    B@@J   B@@?   ^@@&:   Y@@G   5@@P ?@@&55B@&?                      
+                     .&@@P&@&?    G@@Y  .#@@?   ~@@&:   J@@B   P@@P ?@@#555@@G:                     
+                     .&@@!:P@@#!  !@@@GP#@@B:   ~@@@:   ^#@@BPB@@&~ ?@@&   @@@!                     
+                     .PGG~  7GGG!  ^JPBBG5!.    ^GGP:    .75GBG5?:  !GGGGGGPY~                  
 */
 
 #include <SPI.h>
 #include <MFRC522.h>
+#include <Servo.h>
 
+// RFID
+#define SS_A_PIN 53  // SDA PIN MASUK
+#define SS_B_PIN 7   // SDA PIN KELUAR
+#define RST_PIN 5    // RST PIN
+// OUTPUT
+#define BUZZER_PIN 9        // BUZZER PIN
+#define SERVO_MASUK_PIN 8   // SERVO MASUK PIN
+#define SERVO_KELUAR_PIN 2  // SERVO MASUK PIN
 
-#define SS_1_PIN 53
-#define SS_2_PIN 7
-#define RST_PIN 5  // Configurable, take a unused pin, only HIGH/LOW required, must be diffrent to SS 1
-
-MFRC522 mfrc522A(SS_1_PIN, RST_PIN), mfrc522B(SS_2_PIN, RST_PIN);  // Create MFRC522 instance.
+// VARIABEL
 
 String saved[] = {
   "",
@@ -34,15 +59,21 @@ String saved[] = {
   "",
   "",
 };
-String x = "";
 
+// INIT LIBRARY
+MFRC522 mfrc522A(SS_A_PIN, RST_PIN), mfrc522B(SS_B_PIN, RST_PIN);  // Create MFRC522 instance.
+Servo masuk, keluar;
 
 void setup() {
   Serial.begin(9600);  // Initiate a serial communication
   while (!Serial)
-    ;  // Do nothing if no serial port is opened (added for Arduinos based on ATMEGA32U4)
-
+    ;           // Do nothing if no serial port is opened (added for Arduinos based on ATMEGA32U4)
   SPI.begin();  // Init SPI bus
+
+  // SERVO
+  masuk.attach(SERVO_MASUK_PIN);
+  keluar.attach(SERVO_KELUAR_PIN);
+
   // READER A
   mfrc522A.PCD_Init();
   Serial.print(F("Reader A "));
