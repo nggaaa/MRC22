@@ -34,12 +34,16 @@
 
 
 #define SS_A_PIN 6  // SDA PIN MASUK
-#define SS_B_PIN 7   // SDA PIN KELUAR
-#define RST_PIN 5    // RST PIN
+#define SS_B_PIN 7  // SDA PIN KELUAR
+#define RST_PIN 5   // RST PIN
 
 #define SERVO_MASUK_PIN 3   // SERVO MASUK PIN
-#define SERVO_KELUAR_PIN 4   // SERVO KELUAR PIN
-#define BUZZER_PIN 11    // RST PIN
+#define SERVO_KELUAR_PIN 4  // SERVO KELUAR PIN
+#define BUZZER_PIN 11       // RST PIN
+
+// IR
+#define IR_MANY_PIN 3  // IR 1 PIN
+int pageState = 1;
 
 String saved[] = {
   "",
@@ -67,33 +71,44 @@ EasyNex myNex(Serial1);
 
 
 void setup() {
-  Serial.begin(9600);  // Initiate a serial communication
+  Serial.begin(9600);
   myNex.begin(9600);
   delay(100);
   myNex.writeStr("page page1");
+  SPI.begin();
 
-  SPI.begin();  // Init SPI bus
+  // PINMODE
+  pinMode(BUZZER_PIN, OUTPUT);
+  digitalWrite(BUZZER_PIN, LOW);
+
+  // INIT IR SENSOR
+  for (uint8_t i = 0; i < IR_MANY_PIN; i++) {
+    pinMode(30 + i, INPUT);
+  }
+
   // SERVO
   s_masuk.attach(SERVO_MASUK_PIN);
   s_keluar.attach(SERVO_KELUAR_PIN);
+
   // READER A
   mfrc522A.PCD_Init();
   Serial.print(F("Reader A "));
   Serial.print(F(": "));
   mfrc522A.PCD_DumpVersionToSerial();
+
   // READER B
   mfrc522B.PCD_Init();
   Serial.print(F("Reader B "));
   Serial.print(F(": "));
   mfrc522B.PCD_DumpVersionToSerial();
+
   // RESET SERVO
   s_masuk.write(0);
   s_keluar.write(0);
-  // PINMODE
-  pinMode(BUZZER_PIN, OUTPUT);
-  digitalWrite(BUZZER_PIN, LOW);
+
   delay(1000);
   myNex.writeStr("page page0");
+  pageState = 0;
   delay(100);
 }
 
@@ -231,23 +246,31 @@ void keluar(int time) {
 }
 
 void denied() {
-  int jeda=200;
-  for (int i = 0 ; i <= 19; i ++) {
+  int jeda = 200;
+  for (int i = 0; i <= 19; i++) {
     // sets the value (range from 0 to 255):
     digitalWrite(BUZZER_PIN, HIGH);
     delay(jeda);
     digitalWrite(BUZZER_PIN, LOW);
     delay(jeda);
-    jeda=jeda-10;
+    jeda = jeda - 10;
   }
 }
-
 void cekKosong() {
   int kosong = 0;
-  for (int i = 0; i < 16; i++) {
-    if (saved[i - 1] == "") {
+  for (int i = 0; i < 16;) {
+    if (saved[i] == "") {
       kosong++;
     }
+    i++;
   }
-  myNex.writeStr("t0.txt", String(kosong + 1));
+  if (kosong <= 0 && pageState != 2) {
+    myNex.writeStr("page page2");
+    pageState = 2;
+  } else if (pageState != 0) {
+    myNex.writeStr("page page0");
+    pageState = 0;
+  }
+
+  if (pageState == 0) myNex.writeStr("t0.txt", String(kosong));
 }
